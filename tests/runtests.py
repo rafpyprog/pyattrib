@@ -37,10 +37,6 @@ def tear_down():
 
 
 ''' Tests '''
-def test_attrib_path_equal_path_arg(attrib):
-    attrib.path == TEST_DIR
-
-
 def test_direcory_without_attributes(attrib):
     assert attrib.attributes == []
 
