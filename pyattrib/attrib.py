@@ -17,12 +17,6 @@ ATTR_SYSTEM_FILE = 'S'
 ATTRIBUTES = (ATTR_ARCHIVE, ATTR_HIDDEN, ATTR_READ_ONLY, ATTR_SYSTEM_FILE)
 
 
-a = Attrib()
-a.attributes
-attrib = subprocess.run(['attrib', ''], stdout=PIPE, stderr=PIPE, encoding='utf-8', check=True)
-attrib.args
-attrib.stdout
-attrib.stderr
 
 class Attrib():
     def __init__(self, path=None, recursive=False, apply_directories=False):
@@ -45,9 +39,10 @@ class Attrib():
 
         self.path = path
 
-        if self.path = None:
+        if self.path is None:
             self.CMD = ['attrib']
         else:
+            self.path = os.path.abspath(path)
             self.CMD = ['attrib', self.path]
 
         self.recursive = recursive
@@ -55,15 +50,19 @@ class Attrib():
 
     @property
     def attributes(self):
-        attr = self.get_attributes()
-        # remove the path and line breaks
-        attr = attr.replace(self.path, '').strip('\n')
-        attr = attr.replace(" ", "")
-        attr = list(attr.upper())
+        if self.path:
+            attr = self.get_attributes()
+            # remove the path and line breaks
+            attr = attr.replace(self.path, '').strip('\n')
+            attr = attr.replace(" ", "")
+            attr = list(attr.upper())
+        else:
+            attr = self.get_attributes()
+            attr = attr.split('\n')
         return attr
 
     def get_attributes(self):
-        attrib = subprocess.run([self.CMD, self.path], stdout=PIPE,
+        attrib = subprocess.run(self.CMD, stdout=PIPE,
                                 encoding='utf-8', check=True)
         assert attrib.returncode == 0
         return attrib.stdout
@@ -84,12 +83,10 @@ class Attrib():
 
     def toogle_attributes(self, action, *attributes):
         # check if is directory
-        args = [self.CMD]
+        args = self.CMD.copy()
 
         for attr in attributes:
-            args.append(''.join([action, attr]))
-
-        args.append(self.path)
+            args.insert(-1, ''.join([action, attr]))
 
         if self.recursive is True:
             args.append('/s')
@@ -139,3 +136,7 @@ class Attrib():
     @property
     def is_system_file(self):
         return ATTR_SYSTEM_FILE in self.attributes
+
+if __name__ == '__main__':
+    a = Attrib()
+    print(a.attributes)
