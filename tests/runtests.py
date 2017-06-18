@@ -40,7 +40,7 @@ def test_set_attribute_archive(attrib):
     attrib.set_attributes(ATTR_ARCHIVE)
     assert attrib.attributes == [ATTR_ARCHIVE]
 
-'''
+
 def test_set_attribute_readonly(attrib):
     attrib.set_attributes(ATTR_READ_ONLY)
     assert attrib.attributes == [ATTR_READ_ONLY]
@@ -96,6 +96,7 @@ def test_clear_multiple_attributes(attrib):
     attrib.clear_attributes(*attributes)
     assert attrib.attributes == []
 
+
 def test_is_hidden(attrib):
     assert attrib.is_hidden is False
 
@@ -129,6 +130,9 @@ def test_is_invalid_attribution(attrib):
     with pytest.raises(AttributeError):
         attrib.set_attributes(ATTR_HIDDEN)
 
+
 def test_attributes_without_path():
+    ''' Should return a list with files and attributes from the current folder
+    if not recursive '''
     attrib = Attrib()
-    assert attrib.attributes == []'''
+    assert attrib.attributes == []

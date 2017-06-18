@@ -1,1 +1,3 @@
-{}
+{
+  "tests/runtests.py::test_attributes_without_path": true
+}
