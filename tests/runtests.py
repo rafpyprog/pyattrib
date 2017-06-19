@@ -1,9 +1,32 @@
 import os
+import shutil
 import pytest
 from pyattrib import *
 
 
 TEST_DIR = os.path.join(os.getcwd(), 'test_dir')
+
+def log(data):
+    with open('D:\\Projetos\\Pessoal\\pyattrib\\tests\\log.txt', 'a') as f:
+        f.write(str(data) + '\n')
+
+
+def create_file_with_attribute(filename, attribute):
+    open(filename, 'w').close()
+    os.system('attrib +{} {}'.format(attribute, filename))
+
+
+def clean_test_dir():
+    os.system('attrib -S -H -A -R {}'.format(TEST_DIR))
+
+    for dirpath, dirnames, filenames in os.walk(TEST_DIR):
+        for name in filenames:
+            file_path = os.path.join(dirpath, name)
+            os.system('attrib -S -H -A -R {}'.format(file_path))
+            os.remove(file_path)
+
+    os.rmdir(TEST_DIR)
+
 
 
 ''' Test Setup '''
@@ -12,17 +35,13 @@ def setup_function():
     try:
         os.mkdir(TEST_DIR)
     except FileExistsError:
-        os.system('attrib -S -H -A -R {}'.format(TEST_DIR))
-
-        os.rmdir(TEST_DIR)
+        clean_test_dir()
         os.mkdir(TEST_DIR)
-
 
 
 def teardown_function():
     ''' Deletes the test directory '''
-    os.system('attrib -S -H -A -R {}'.format(TEST_DIR))
-    os.rmdir(TEST_DIR)
+    clean_test_dir()
 
 
 @pytest.fixture
@@ -31,7 +50,7 @@ def attrib():
     attrib = Attrib(TEST_DIR)
     return attrib
 
-''' Tests '''
+''' Tests
 def test_direcory_without_attributes(attrib):
     assert attrib.attributes == []
 
@@ -131,8 +150,84 @@ def test_is_invalid_attribution(attrib):
         attrib.set_attributes(ATTR_HIDDEN)
 
 
-def test_attributes_without_path():
-    ''' Should return a list with files and attributes from the current folder
-    if not recursive '''
+def test_attributes_without_path_return_dict():
+    # Should return a dict with information from files in the current folder
+    # if not recursive
+
+    # save the actual working dir
+    working_dir = os.getcwd()
+
+    # Go to the test dir and populate with files
+    os.chdir(TEST_DIR)
+    create_file_with_attribute('archive', 'a')
+    create_file_with_attribute('hidden', 'h')
+    create_file_with_attribute('read_only', 'r')
+    create_file_with_attribute('system', 's')
+
+    # run attrib
     attrib = Attrib()
-    assert attrib.attributes == []
+    log(attrib.attributes)
+    assert isinstance(attrib.attributes, dict)
+
+    #return to working dir
+    os.chdir(working_dir)
+
+
+def test_attributes_without_path_return_dict_correct_lenght():
+
+    # save the actual working dir
+    working_dir = os.getcwd()
+
+    # Go to the test dir and populate with files
+    os.chdir(TEST_DIR)
+    create_file_with_attribute('archive', 'a')
+    create_file_with_attribute('hidden', 'h')
+    create_file_with_attribute('read_only', 'r')
+    create_file_with_attribute('system', 's')
+
+    # run attrib
+    attrib = Attrib()
+    assert len(attrib.attributes) == 4
+    log(attrib.attributes)
+
+    #return to working dir
+    os.chdir(working_dir)
+
+'''
+def test_attributes_without_path_return_correct_values():
+    # save the actual working dir
+    working_dir = os.getcwd()
+
+    # Go to the test dir and populate with files
+    os.chdir(TEST_DIR)
+    create_file_with_attribute(os.path.join(TEST_DIR, 'archive'), 'a')
+    create_file_with_attribute('hidden', 'h')
+    create_file_with_attribute('read_only', 'r')
+    create_file_with_attribute('system', 's')
+
+    # run attrib and get values
+    attrib = Attrib()
+    attributes = attrib.attributes
+
+    # all files have an A attribute when created
+    filename = os.path.join(TEST_DIR, 'archive')
+    assert attributes[filename] == ['A']
+
+    filename = os.path.join(TEST_DIR, 'hidden')
+    assert attributes[filename] == ['A', ATTR_HIDDEN]
+
+    filename = os.path.join(TEST_DIR, 'read_only')
+    assert attributes[filename] == ['A', ATTR_READ_ONLY]
+
+    filename = os.path.join(TEST_DIR, 'system')
+    assert attributes[filename] == ['A', ATTR_SYSTEM_FILE]
+
+    # make some changes
+    os.system('attrib -a archive')
+    attrib = Attrib()
+    attributes = attrib.attributes
+    filename = os.path.join(TEST_DIR, 'archive')
+    assert attributes[filename] == []
+
+    #return to working dir
+    os.chdir(working_dir)
