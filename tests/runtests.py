@@ -20,13 +20,23 @@ def clean_test_dir():
     os.system('attrib -S -H -A -R {}'.format(TEST_DIR))
 
     for dirpath, dirnames, filenames in os.walk(TEST_DIR):
-        for name in filenames:
-            file_path = os.path.join(dirpath, name)
+        for folder, name in dirnames, filenames:
+            file_path = os.path.join(dirpath, folder,  name)
             os.system('attrib -S -H -A -R {}'.format(file_path))
             os.remove(file_path)
+        
 
     os.rmdir(TEST_DIR)
 
+
+def populate_test_dir():
+    os.chdir(TEST_DIR)
+    create_file_with_attribute(os.path.join(TEST_DIR, 'archive'), 'a')
+    create_file_with_attribute('hidden', 'h')
+    create_file_with_attribute('read_only', 'r')
+    create_file_with_attribute('system', 's')
+    os.mkdir('level1')
+    open('./level1/fileone', 'w').close()
 
 
 ''' Test Setup '''
@@ -50,7 +60,7 @@ def attrib():
     attrib = Attrib(TEST_DIR)
     return attrib
 
-''' Tests
+''' Tests '''
 def test_direcory_without_attributes(attrib):
     assert attrib.attributes == []
 
@@ -193,17 +203,13 @@ def test_attributes_without_path_return_dict_correct_lenght():
     #return to working dir
     os.chdir(working_dir)
 
-'''
+
 def test_attributes_without_path_return_correct_values():
     # save the actual working dir
     working_dir = os.getcwd()
 
     # Go to the test dir and populate with files
-    os.chdir(TEST_DIR)
-    create_file_with_attribute(os.path.join(TEST_DIR, 'archive'), 'a')
-    create_file_with_attribute('hidden', 'h')
-    create_file_with_attribute('read_only', 'r')
-    create_file_with_attribute('system', 's')
+    populate_test_dir()
 
     # run attrib and get values
     attrib = Attrib()
@@ -231,3 +237,7 @@ def test_attributes_without_path_return_correct_values():
 
     #return to working dir
     os.chdir(working_dir)
+
+def test_recursive_attributes():
+    attrib = Attrib()
+    pass

@@ -9,11 +9,29 @@ import os
 import subprocess
 from subprocess import PIPE
 
+from .attribparser import *
 
+''' ATTR_ARCHIVE: Set the ARCHIVE attribute of a file. When the A option is
+used, this flags the file as available for archiving when using the BACKUP or
+XCOPY commands. When set, it indicates that the hosting file has changed
+since the last backup operation. Windows' file system sets this attribute on
+any file that has changed. '''
 ATTR_ARCHIVE = 'A'
+
+''' ATTR_HIDDEN: When set, indicates that the hosting file is hidden. MS-DOS
+commands like dir and Windows apps like File Explorer do not show hidden
+files by default, unless asked to do so. '''
 ATTR_HIDDEN = 'H'
+
+''' ATTR_READ_ONLY option makes a file read-only. Read-only files may be
+read but they can`t be changed or deleted.'''
 ATTR_READ_ONLY = 'R'
+
+''' ATTR_SYSTEM_FILE: Set the SYSTEM attribute of a file. When this option is
+used, this flags the file as a command file used only by DOS. The file will not
+appear in a directory listing. '''
 ATTR_SYSTEM_FILE = 'S'
+
 ATTRIBUTES = (ATTR_ARCHIVE, ATTR_HIDDEN, ATTR_READ_ONLY, ATTR_SYSTEM_FILE)
 
 
@@ -46,7 +64,7 @@ class Attrib():
         if self.path is None:
             self.CMD = ['attrib']
         else:
-            self.path = os.path.abspath(path)
+            self.path = os.path.abspath(path.strip())
             self.CMD = ['attrib', self.path]
 
         self.recursive = recursive
@@ -54,24 +72,19 @@ class Attrib():
 
     @property
     def attributes(self):
-        if self.path:
-            attr = self.get_attributes()
-            # remove the path and line breaks
-            attr = attr.replace(self.path, '').strip('\n')
-            attr = attr.replace(" ", "")
-            attr = list(attr.upper())
-        else:
-            attr = self.get_attributes()
-            attr = [line for line in attr.split('\n') if line != '']
-        return attr
+        attributes = self.get_attributes()
+        count_returned_attributes = len(attributes)
+        if count_returned_attributes == 1:
+            path = list(attributes.keys())[0]
+            attributes = attributes[path]
+        return attributes
 
     def get_attributes(self):
         attrib = subprocess.run(self.CMD, stdout=PIPE,
                                 encoding='utf-8', check=True)
-        assert attrib.returncode == 0
-        attributes = attrib.stdout
-
-        return attrib.stdout
+        stdout = attrib.stdout
+        attributes = attrib_parser(stdout)
+        return attributes
 
     def set_attributes(self, *args):
         for attr in args:  # check is attribute is valid
@@ -109,8 +122,8 @@ class Attrib():
 
         # If there's stdout and path is not empty Attrib returned a msg error.
         # Some attributes can't be set after another eg.: +a in a file with +s
-        # If the path is empty or there is a path but no args,
-        # Attrib cmd returns the attributes of the files inside the current
+        # If the path is empty Attrib cmd returns the attributes of the files
+        # inside the current
         # directory. We ignore this behavior.
         has_path = self.path != ''
         has_args = attributes != ()
@@ -143,11 +156,8 @@ class Attrib():
     def is_system_file(self):
         return ATTR_SYSTEM_FILE in self.attributes
 
+
 if __name__ == '__main__':
-    a = Attrib()
+    a = Attrib('D:\\Projetos\\Pessoal\\pyattrib\\pyattrib')
     print(a.attributes)
     print(len(a.attributes))
-    for i in a.attributes:
-        print(i)
-        if i == '':
-            print('oi')
