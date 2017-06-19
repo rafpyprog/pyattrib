@@ -19,14 +19,13 @@ def create_file_with_attribute(filename, attribute):
 def clean_test_dir():
     os.system('attrib -S -H -A -R {}'.format(TEST_DIR))
 
-    for dirpath, dirnames, filenames in os.walk(TEST_DIR):
-        for folder, name in dirnames, filenames:
-            file_path = os.path.join(dirpath, folder,  name)
-            os.system('attrib -S -H -A -R {}'.format(file_path))
-            os.remove(file_path)
-        
+    for root, dirs, files in os.walk(TEST_DIR):
+        for f in files:
+            path = os.path.join(root, f)
+            os.system('attrib -S -H -A -R {}'.format(path))
+            os.remove(path)
 
-    os.rmdir(TEST_DIR)
+    shutil.rmtree(TEST_DIR)
 
 
 def populate_test_dir():
@@ -176,7 +175,6 @@ def test_attributes_without_path_return_dict():
 
     # run attrib
     attrib = Attrib()
-    log(attrib.attributes)
     assert isinstance(attrib.attributes, dict)
 
     #return to working dir
@@ -198,7 +196,6 @@ def test_attributes_without_path_return_dict_correct_lenght():
     # run attrib
     attrib = Attrib()
     assert len(attrib.attributes) == 4
-    log(attrib.attributes)
 
     #return to working dir
     os.chdir(working_dir)
