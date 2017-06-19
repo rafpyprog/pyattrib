@@ -17,6 +17,10 @@ ATTR_SYSTEM_FILE = 'S'
 ATTRIBUTES = (ATTR_ARCHIVE, ATTR_HIDDEN, ATTR_READ_ONLY, ATTR_SYSTEM_FILE)
 
 
+def attribute_parser(output):
+    attributes = output[:13]
+    return attributes
+
 
 class Attrib():
     def __init__(self, path=None, recursive=False, apply_directories=False):
@@ -58,13 +62,15 @@ class Attrib():
             attr = list(attr.upper())
         else:
             attr = self.get_attributes()
-            attr = attr.split('\n')
+            attr = [line for line in attr.split('\n') if line != '']
         return attr
 
     def get_attributes(self):
         attrib = subprocess.run(self.CMD, stdout=PIPE,
                                 encoding='utf-8', check=True)
         assert attrib.returncode == 0
+        attributes = attrib.stdout
+
         return attrib.stdout
 
     def set_attributes(self, *args):
@@ -140,3 +146,8 @@ class Attrib():
 if __name__ == '__main__':
     a = Attrib()
     print(a.attributes)
+    print(len(a.attributes))
+    for i in a.attributes:
+        print(i)
+        if i == '':
+            print('oi')
