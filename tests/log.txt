@@ -1,2 +1,0 @@
-{'D:\\Projetos\\Pessoal\\pyattrib\\tests\\test_dir\\archive': ['A'], 'D:\\Projetos\\Pessoal\\pyattrib\\tests\\test_dir\\hidden': ['A', 'H'], 'D:\\Projetos\\Pessoal\\pyattrib\\tests\\test_dir\\read_only': ['A', 'R'], 'D:\\Projetos\\Pessoal\\pyattrib\\tests\\test_dir\\system': ['A', 'S']}
-{'D:\\Projetos\\Pessoal\\pyattrib\\tests\\test_dir\\archive': ['A'], 'D:\\Projetos\\Pessoal\\pyattrib\\tests\\test_dir\\hidden': ['A', 'H'], 'D:\\Projetos\\Pessoal\\pyattrib\\tests\\test_dir\\read_only': ['A', 'R'], 'D:\\Projetos\\Pessoal\\pyattrib\\tests\\test_dir\\system': ['A', 'S']}

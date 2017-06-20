@@ -1,10 +1,11 @@
-import os
 import shutil
+import os
 import pytest
 from pyattrib import *
 
 
 TEST_DIR = os.path.join(os.getcwd(), 'test_dir')
+WORKING_DIR = os.getcwd()
 
 def log(data):
     with open('D:\\Projetos\\Pessoal\\pyattrib\\tests\\log.txt', 'a') as f:
@@ -34,8 +35,12 @@ def populate_test_dir():
     create_file_with_attribute('hidden', 'h')
     create_file_with_attribute('read_only', 'r')
     create_file_with_attribute('system', 's')
-    os.mkdir('level1')
-    open('./level1/fileone', 'w').close()
+
+    level1 = os.path.join(TEST_DIR, 'level1')
+    os.mkdir(level1)
+
+    open(os.path.join(level1, 'file1'), 'w').close()
+
 
 
 ''' Test Setup '''
@@ -43,13 +48,14 @@ def setup_function():
     ''' Creates a clean test directory for testing attributes '''
     try:
         os.mkdir(TEST_DIR)
-    except FileExistsError:
+    except (FileExistsError, PermissionError):
         clean_test_dir()
         os.mkdir(TEST_DIR)
 
-
+''' Tear Down '''
 def teardown_function():
-    ''' Deletes the test directory '''
+    os.chdir(WORKING_DIR)
+    # Deletes the test directory
     clean_test_dir()
 
 
@@ -125,6 +131,12 @@ def test_clear_multiple_attributes(attrib):
     assert attrib.attributes == []
 
 
+def test_raise_on_clear_invalid_attribute(attrib):
+    invalid_attribute = 'invalid'
+    with pytest.raises(ValueError):
+        attrib.clear_attributes(invalid_attribute)
+
+
 def test_is_hidden(attrib):
     assert attrib.is_hidden is False
 
@@ -177,9 +189,6 @@ def test_attributes_without_path_return_dict():
     attrib = Attrib()
     assert isinstance(attrib.attributes, dict)
 
-    #return to working dir
-    os.chdir(working_dir)
-
 
 def test_attributes_without_path_return_dict_correct_lenght():
 
@@ -196,9 +205,6 @@ def test_attributes_without_path_return_dict_correct_lenght():
     # run attrib
     attrib = Attrib()
     assert len(attrib.attributes) == 4
-
-    #return to working dir
-    os.chdir(working_dir)
 
 
 def test_attributes_without_path_return_correct_values():
@@ -232,9 +238,72 @@ def test_attributes_without_path_return_correct_values():
     filename = os.path.join(TEST_DIR, 'archive')
     assert attributes[filename] == []
 
-    #return to working dir
-    os.chdir(working_dir)
 
-def test_recursive_attributes():
-    attrib = Attrib()
-    pass
+def test_attributes_recursive_true():
+    working_dir = os.getcwd()
+    populate_test_dir()
+
+    attrib = Attrib(recursive=True)
+    attr = attrib.attributes
+    print(attr)
+    assert len(attr) == 5
+
+
+def test_attributes_recursive_true_apply_directory_true():
+    working_dir = os.getcwd()
+    populate_test_dir()
+
+    attrib = Attrib(recursive=True, apply_directories=True)
+    attr = attrib.attributes
+    print(attr)
+    assert len(attr) == 6
+
+    # assert there is one dir
+    dir_count = sum(os.path.isdir(i) for i in attr)
+    assert dir_count == 1
+
+
+def test_set_attributes_recursive():
+    os.chdir(TEST_DIR)
+    open('file1.txt', 'w').close()
+    #subdir
+    foo = os.path.join(TEST_DIR, 'foo')
+    os.mkdir(foo)
+
+    file2 = os.path.join(foo, 'file2')
+    open(os.path.join(foo, 'file2'), 'w').close()
+    a = Attrib(recursive=True)
+
+    a.set_attributes(ATTR_HIDDEN)
+    assert len(a.attributes) == 2
+
+    test_file2 = Attrib(file2)
+    assert test_file2.attributes == ['A', ATTR_HIDDEN]
+
+    test_file1 = Attrib(os.path.join(TEST_DIR, 'file1.txt'))
+    assert test_file1.attributes == ['A', ATTR_HIDDEN]
+
+
+def test_clear_all_attributes_recursive():
+    os.chdir(TEST_DIR)
+    open('file1.txt', 'w').close()
+    #subdir
+    foo = os.path.join(TEST_DIR, 'foo')
+    os.mkdir(foo)
+
+    file2 = os.path.join(foo, 'file2')
+    open(os.path.join(foo, 'file2'), 'w').close()
+    a = Attrib(recursive=True)
+
+    a.set_attributes(ATTR_HIDDEN)
+    assert len(a.attributes) == 2
+
+    test_file2 = Attrib(file2)
+    assert test_file2.attributes == ['A', ATTR_HIDDEN]
+
+    test_file1 = Attrib(os.path.join(TEST_DIR, 'file1.txt'))
+    assert test_file1.attributes == ['A', ATTR_HIDDEN]
+
+    a.clear_all()
+    assert test_file1.attributes == []
+    assert test_file2.attributes == []
